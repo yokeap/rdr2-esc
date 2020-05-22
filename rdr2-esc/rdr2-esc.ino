@@ -4,6 +4,7 @@ class thruster{
   unsigned int _dirPin, _pwmPin;
 
   public:
+  unsigned int pwmVal;
   //constructor
   thruster(unsigned int dirPin, unsigned int pwmPin){
     _dirPin = dirPin;
@@ -17,6 +18,7 @@ class thruster{
   }
 
   void setPWM(unsigned int pwm){
+    pwmVal = pwm;
     if ((_dirPin < 5) || (_dirPin > 9)) {
       analogWriteResolution(8);
       analogWrite(_pwmPin, map(pwm, 0, 100, 0, 255));
@@ -26,7 +28,6 @@ class thruster{
       analogWriteResolution(12);
       analogWrite(_pwmPin, map(pwm, 0, 100, 0, 4095));
     }
-
   }
 };
 
@@ -57,6 +58,10 @@ void serialEvent1() {
 }
 
 void setup() {
+  T[0].setPWM(100);
+  T[1].setPWM(100);
+  T[2].setPWM(100);
+  T[3].setPWM(100);
   Serial.begin(115200);
   Serial1.begin(115200);
   delay(1000);
@@ -97,15 +102,34 @@ char motorPwmParser(String strTemp){
   return 1;
 }
 
-void H_Control(uint16_t value,uint8_t motorNumber)
+void H_Control(int value,uint8_t motorNumber)
 {
-    if(value <= -100) value = -100;
-    if(value >= 100) value = 100;
+    if(value <= -100) value = -99;
+    if(value >= 100) value = 99;
     
-    if(value > 0) 
-      T[motorNumber].setDirection(1);
-    if(value < 0) 
-      T[motorNumber].setDirection(0);
+//    if(value > 0) 
+//      T[motorNumber].setDirection(1);
+//    if(value < 0) 
+//      T[motorNumber].setDirection(0);
 
       T[motorNumber].setPWM(100 - abs(value));
+}
+
+void softStartPWM()
+{
+  for(int i = 0; i < 4; i++)
+  {
+    if(T[i].setPWM > 0) T[motorNumber].setDirection(1);
+    if(T[i].setPWM < 0) T[motorNumber].setDirection(0);
+    
+    if(T[i].pwmCurrentVal < T[i].setPWM) {
+      T[i].pwmCurrentVal = T[i].pwmCurrentVal + 2;
+      if(T[i].pwmCurrentVal > 4095) T[i].pwmCurrentVal = 4095;
+      T[i].drivePWM();
+    }
+//    if(T[i].pwmCurrentVal > T[i].setPWM) {
+//      T[i].pwmCurrentVal = T[i].pwmCurrentVal + 2;
+//      T[i].drivePWM();
+//    }
+  }
 }
